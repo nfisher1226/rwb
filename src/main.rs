@@ -1,5 +1,4 @@
-use clap::{crate_version, load_yaml, App};
-//use url::{Url, Host, Position};
+use getopts::Options;
 extern crate gdk;
 extern crate glib;
 extern crate gtk;
@@ -15,6 +14,7 @@ use crate::gtk::WindowType::Toplevel;
 use crate::url::Url;
 use crate::webkit2gtk::{ LoadEvent, WebViewExt };
 
+use std::{ env, process };
 use std::rc::Rc;
 
 mod keys;
@@ -234,9 +234,23 @@ impl Gui {
 }
 
 fn main() {
-    let yaml = load_yaml!("cli.yaml");
-    let matches = App::from(yaml).version(crate_version!()).get_matches();
-    let uri = matches.value_of("URI").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let progname = args[0].split('/').last().unwrap();
+    let usage = format!("Usage: {} uri", progname);
+    let opts = Options::new();
+    let args = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(m) => {
+            eprintln!("Error: {}", m.to_string());
+            eprintln!("{}", usage);
+            process::exit(1);
+        }
+    };
+    let uri = if args.free.len() == 1 {
+        &args.free[0]
+    } else {
+        "https://google.com"
+    };
 
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
