@@ -281,6 +281,13 @@ fn main() {
         }
     }));
 
+    gui.notebook.connect_page_removed(clone!(@weak gui => move |_,_,_| {
+        if gui.notebook.get_children().len() == 0 {
+            gtk::main_quit();
+            Inhibit(false);
+        }
+    }));
+
     let clone = gui.clone();
     gui.window.connect_key_release_event(move |_, gdk| {
         let key = Key {
@@ -289,6 +296,11 @@ fn main() {
             shift: gdk.get_state().contains(ModifierType::SHIFT_MASK),
         };
         key.process_keypress(clone.clone());
+        Inhibit(false)
+    });
+
+    gui.window.connect_delete_event(|_, _| {
+        gtk::main_quit();
         Inhibit(false)
     });
 
