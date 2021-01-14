@@ -1,8 +1,0 @@
-name: rwb
-author: The JeanG3nie <jeang3nie@hitchhiker-linux.org>
-about: dumb web browser
-args:
-    - URI:
-        about: Resource to be loaded
-        default_value: "https://google.com"
-        takes_value: true

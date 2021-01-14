@@ -1,4 +1,4 @@
-use crate::Gui;
+use crate::gui::Gui;
 use std::rc::Rc;
 
 const ESC: u16 = 9;
