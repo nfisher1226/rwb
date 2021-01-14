@@ -1,4 +1,5 @@
 use crate::gui::Gui;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 const ESC: u16 = 9;
@@ -10,12 +11,12 @@ const R: u16 = 27;
 const T: u16 = 28;
 //const Y: u16 = 29;
 //const U: u16 = 30;
-//const I: u16 = 31;
+const I: u16 = 31;
 const O: u16 = 32;
 //const P: u16 = 33;
 //const A: u16 = 38;
 //const S: u16 = 39;
-//const D: u16 = 40;
+const D: u16 = 40;
 //const F: u16 = 41;
 //const G: u16 = 42;
 const H: u16 = 43;
@@ -38,30 +39,45 @@ pub struct Key {
 
 impl Key {
     pub fn process_keypress(&self, gui: Rc<Gui>) {
-        if self.ctrl && !self.shift {          // Ctrl
+        let mode = gui.mode.borrow().to_string();
+        /* Global - all modes */
+        if !self.ctrl && !self.shift {             // No modifiers
+            match self.key {
+                ESC => {
+                    gui.enter_normal_mode();
+                    gui.hide_cmd_box();
+                },
+                _ => {},
+            }
+        } else if self.ctrl && !self.shift {       // Ctrl
             match self.key {
                 Q => gtk::main_quit(),
                 W => gui.close_tab(),
-                R => gui.reload_page(),
                 N => gui.new_tab("about:blank"),
-                O => gui.get_cmd(),
-                H => gui.go_back(),
-                L => gui.go_forward(),
                 T => gui.new_tab("http://google.com"),
                 TAB => gui.next_tab(),
                 _ => {},
             }
-        } else if self.ctrl && self.shift {     // Ctrl-Shift
-            match self.key {
-                O => gui.get_cmd_new(),
-                J => gui.next_tab(),
-                K => gui.prev_tab(),
-                _ => {},
-            }
-        } else if !self.ctrl && !self.shift {   // No modifiers
-            match self.key {
-                ESC => gui.hide_cmd_box(),
-                _ => {},
+        }
+        /* Normal mode */
+        if mode == "normal" {
+            if !self.ctrl && !self.shift {          // Ctrl
+                match self.key {
+                    D => gui.close_tab(),
+                    R => gui.reload_page(),
+                    O => gui.get_cmd(),
+                    H => gui.go_back(),
+                    L => gui.go_forward(),
+                    I => gui.enter_insert_mode(),
+                    _ => {},
+                }
+            } else if !self.ctrl && self.shift {     // Ctrl-Shift
+                match self.key {
+                    O => gui.get_cmd_new(),
+                    J => gui.next_tab(),
+                    K => gui.prev_tab(),
+                    _ => {},
+                }
             }
         }
     }

@@ -13,12 +13,14 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use crate::keys::Key;
+use crate::scripts::Scripts;
 
 pub struct Gui {
     pub window: gtk::Window,
     pub notebook: gtk::Notebook,
     pub command_box: gtk::Entry,
     pub mode: RefCell<String>,
+    pub scripts: Scripts,
 }
 
 fn parse_url(url: &str) -> String {
@@ -54,6 +56,7 @@ impl Gui {
             notebook: gtk::Notebook::new(),
             command_box: gtk::Entry::new(),
             mode: RefCell::new(String::from("normal")),
+	    scripts: Scripts::new(),
         }
     }
 
@@ -88,8 +91,11 @@ impl Gui {
                 }
             }
 	    let mode = mode.borrow().to_string();
-            if  load_event == LoadEvent::Finished && mode == "normal" {
-                let script = "alert('normal mode')";
+            if  load_event == LoadEvent::Finished && &mode == "normal" {
+                let script = "let inputs = document.getElementsByTagName('input');
+		    for (i = 0; i < inputs.length; i++) { inputs[i].disabled = true; }
+		    let edits = document.getElementsByTagName('textarea');
+		    for (i = 0; i < edits.length; i++) { edits[i].disabled = true; }";
                 let cancellable = gio::Cancellable::new();
                 web_view.run_javascript(script, Some(&cancellable), |result| match result {
                     Ok(result) => {},
@@ -117,10 +123,30 @@ impl Gui {
     }
 
     pub fn get_cmd(&self) {
-        self.command_box.show();
+        self.enter_cmd_mode();
+	self.command_box.show();
         self.command_box.set_text(":open ");
         self.command_box.grab_focus();
         self.command_box.set_position(6);
+    }
+    
+    pub fn enter_cmd_mode(&self) {
+	self.mode.swap(&RefCell::new(String::from("command")));
+    }
+    
+    pub fn enter_normal_mode(&self) {
+	self.mode.swap(&RefCell::new(String::from("normal")));
+    }
+    
+    pub fn enter_insert_mode(&self) {
+	self.mode.swap(&RefCell::new(String::from("insert")));
+	if let Some(current_web_view) = self.get_current_webview() {
+	    let cancellable = gio::Cancellable::new();
+	    current_web_view.run_javascript(&self.scripts.enable_forms, Some(&cancellable), |result| match result {
+		Ok(result) => {},
+		Err(error) => println!("{}", error),
+	    });
+	}
     }
 
     pub fn get_cmd_new(&self) {
@@ -258,6 +284,7 @@ pub fn run(uri: &str) {
     gui.set_window_title();
 
     gui.command_box.connect_activate(clone!(@weak gui => move |_| {
+	gui.enter_normal_mode();
         gui.parse_cmd();
     }));
 

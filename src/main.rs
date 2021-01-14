@@ -10,7 +10,7 @@ use std::{ env, process };
 
 mod gui;
 mod keys;
-
+mod scripts;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
