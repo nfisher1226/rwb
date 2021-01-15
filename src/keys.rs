@@ -4,20 +4,21 @@ use std::rc::Rc;
 
 const ESC: u16 = 9;
 const TAB: u16 = 23;
+const COLON: u16 = 47;
 const Q: u16 = 24;
 const W: u16 = 25;
 //const E: u16 = 26
 const R: u16 = 27;
 const T: u16 = 28;
 //const Y: u16 = 29;
-//const U: u16 = 30;
+const U: u16 = 30;
 const I: u16 = 31;
 const O: u16 = 32;
 //const P: u16 = 33;
 //const A: u16 = 38;
 //const S: u16 = 39;
 const D: u16 = 40;
-//const F: u16 = 41;
+const F: u16 = 41;
 //const G: u16 = 42;
 const H: u16 = 43;
 const J: u16 = 44;
@@ -27,7 +28,7 @@ const L: u16 = 46;
 //const X: u16 = 53;
 //const C: u16 = 54;
 //const V: u16 = 55;
-//const B: u16 = 56;
+const B: u16 = 56;
 const N: u16 = 57;
 //const M: u16 = 58;
 
@@ -41,27 +42,30 @@ impl Key {
     pub fn process_keypress(&self, gui: Rc<Gui>) {
         let mode = gui.mode.borrow().to_string();
         /* Global - all modes */
-        if !self.ctrl && !self.shift {             // No modifiers
+        if !self.ctrl && !self.shift {
+            // No modifiers
             match self.key {
                 ESC => {
                     gui.enter_normal_mode();
                     gui.hide_cmd_box();
-                },
-                _ => {},
+                }
+                _ => {}
             }
-        } else if self.ctrl && !self.shift {       // Ctrl
+        } else if self.ctrl && !self.shift {
+            // Ctrl
             match self.key {
                 Q => gtk::main_quit(),
                 W => gui.close_tab(),
                 N => gui.new_tab("about:blank"),
                 T => gui.new_tab("http://google.com"),
                 TAB => gui.next_tab(),
-                _ => {},
+                _ => {}
             }
         }
         /* Normal mode */
         if mode == "normal" {
-            if !self.ctrl && !self.shift {          // Ctrl
+            if !self.ctrl && !self.shift {
+                // No Modifiers
                 match self.key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
@@ -69,14 +73,27 @@ impl Key {
                     H => gui.go_back(),
                     L => gui.go_forward(),
                     I => gui.enter_insert_mode(),
-                    _ => {},
+                    J => gui.scroll_down(),
+                    K => gui.scroll_up(),
+                    _ => {}
                 }
-            } else if !self.ctrl && self.shift {     // Ctrl-Shift
+            } else if self.ctrl && !self.shift {
+                // Ctrl
+                match self.key {
+                    F => gui.scroll_page_down(),
+                    B => gui.scroll_page_up(),
+                    D => gui.scroll_half_page_down(),
+                    U => gui.scroll_half_page_up(),
+                    _ => {}
+                }
+            } else if !self.ctrl && self.shift {
+                // Shift
                 match self.key {
                     O => gui.get_cmd_new(),
                     J => gui.next_tab(),
                     K => gui.prev_tab(),
-                    _ => {},
+                    COLON => gui.get_cmd_empty(),
+                    _ => {}
                 }
             }
         }

@@ -6,11 +6,10 @@ extern crate gtk;
 extern crate url;
 extern crate webkit2gtk;
 
-use std::{ env, process };
+use std::{env, process};
 
 mod gui;
 mod keys;
-mod scripts;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -31,5 +30,4 @@ fn main() {
         "https://google.com"
     };
     gui::run(uri);
-
 }

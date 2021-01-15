@@ -1,32 +1,28 @@
-use crate::glib::clone;
-use crate::gio::Cancellable;
 use crate::gdk::ModifierType;
-use crate::gtk::{
-    prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt,
-};
+use crate::gio::Cancellable;
+use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
 use crate::gtk::WindowType::Toplevel;
+use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
-use crate::webkit2gtk::{ LoadEvent, JavascriptResult, WebViewExt };
+use crate::webkit2gtk::{JavascriptResult, LoadEvent, WebViewExt};
 
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::keys::Key;
-use crate::scripts::Scripts;
 
 pub struct Gui {
     pub window: gtk::Window,
     pub notebook: gtk::Notebook,
     pub command_box: gtk::Entry,
     pub mode: RefCell<String>,
-    pub scripts: Scripts,
 }
 
 fn parse_url(url: &str) -> String {
     let url_split = url.split(':').collect::<Vec<&str>>();
     if url_split.len() < 1 {
-        return String::from("about:blank")
+        return String::from("about:blank");
     }
     match url_split[0] {
         "http" => url.to_string(),
@@ -56,7 +52,6 @@ impl Gui {
             notebook: gtk::Notebook::new(),
             command_box: gtk::Entry::new(),
             mode: RefCell::new(String::from("normal")),
-	    scripts: Scripts::new(),
         }
     }
 
@@ -71,36 +66,32 @@ impl Gui {
         self.hide_cmd_box();
         let window = self.window.clone();
         let notebook = self.notebook.clone();
-	let mode = self.mode.clone();
-        web_view.connect_load_changed(clone!(@weak web_view, @weak notebook, @strong mode => move |_,load_event| {
-            if let Some(uri) = web_view.get_uri() {
-                let uri = uri.to_string();
-                let uri = if uri.len() > 50 {
-                    format!("{}... ", &uri[..50])
-                } else {
-                    format!("{} ", uri)
-                };
-                let host = get_tab_label(&uri);
-                notebook.set_tab_label_text(&web_view, &host);
-                if tab == notebook.get_current_page() {
-                    if let Some(title) = web_view.get_title() {
-                        window.set_title(&format!("RWB - {}", &title));
+        let mode = self.mode.borrow().to_string();
+        web_view.connect_load_changed(clone!(@weak web_view => move |_,load_event| {
+                if let Some(uri) = web_view.get_uri() {
+            let uri = uri.to_string();
+                    let uri = if uri.len() > 50 {
+                            format!("{}... ", &uri[..50])
                     } else {
-                        window.set_title(&format!("RWB - {}", &uri));
-                    }
-                }
+                            format!("{} ", uri)
+                    };
+                    let host = get_tab_label(&uri);
+                    notebook.set_tab_label_text(&web_view, &host);
+                    if tab == notebook.get_current_page() {
+                        if let Some(title) = web_view.get_title() {
+                                window.set_title(&format!("RWB - {}", &title));
+                        } else {
+                                window.set_title(&format!("RWB - {}", &uri));
+                        }
             }
-	    let mode = mode.borrow().to_string();
-            if  load_event == LoadEvent::Finished && &mode == "normal" {
-                let script = "let inputs = document.getElementsByTagName('input');
-		    for (i = 0; i < inputs.length; i++) { inputs[i].disabled = true; }
-		    let edits = document.getElementsByTagName('textarea');
-		    for (i = 0; i < edits.length; i++) { edits[i].disabled = true; }";
-                let cancellable = gio::Cancellable::new();
-                web_view.run_javascript(script, Some(&cancellable), |result| match result {
-                    Ok(result) => {},
-                    Err(error) => println!("{}", error),
-                });
+            }
+                if  load_event == LoadEvent::Finished && &mode == "normal" {
+                    let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/disable_forms.js");
+                    web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                            Ok(_) => {},
+                            Err(error) => println!("{}", error),
+                    });
             }
         }));
     }
@@ -124,45 +115,61 @@ impl Gui {
 
     pub fn get_cmd(&self) {
         self.enter_cmd_mode();
-	self.command_box.show();
+        self.command_box.show();
         self.command_box.set_text(":open ");
         self.command_box.grab_focus();
         self.command_box.set_position(6);
     }
-    
-    pub fn enter_cmd_mode(&self) {
-	self.mode.swap(&RefCell::new(String::from("command")));
-    }
-    
-    pub fn enter_normal_mode(&self) {
-	self.mode.swap(&RefCell::new(String::from("normal")));
-    }
-    
-    pub fn enter_insert_mode(&self) {
-	self.mode.swap(&RefCell::new(String::from("insert")));
-	if let Some(current_web_view) = self.get_current_webview() {
-	    let cancellable = gio::Cancellable::new();
-	    current_web_view.run_javascript(&self.scripts.enable_forms, Some(&cancellable), |result| match result {
-		Ok(result) => {},
-		Err(error) => println!("{}", error),
-	    });
-	}
-    }
 
     pub fn get_cmd_new(&self) {
+        self.enter_cmd_mode();
         self.command_box.show();
         self.command_box.set_text(":open_new ");
         self.command_box.grab_focus();
         self.command_box.set_position(10);
     }
 
+    pub fn get_cmd_empty(&self) {
+        self.enter_cmd_mode();
+        self.command_box.show();
+        self.command_box.set_text(":");
+        self.command_box.grab_focus();
+        self.command_box.set_position(10);
+    }
+
+    pub fn enter_cmd_mode(&self) {
+        self.mode.swap(&RefCell::new(String::from("command")));
+    }
+
+    pub fn enter_normal_mode(&self) {
+        self.mode.swap(&RefCell::new(String::from("normal")));
+        if let Some(current_web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/disable_forms.js");
+            current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn enter_insert_mode(&self) {
+        self.mode.swap(&RefCell::new(String::from("insert")));
+        if let Some(current_web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/enable_forms.js");
+            current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
     fn parse_cmd(&self) {
-        let cmd_string = self.command_box
-            .get_text()
-            .to_string();
+        let cmd_string = self.command_box.get_text().to_string();
         let cmd_string: Vec<&str> = cmd_string.split_whitespace().collect();
         let cmd = cmd_string[0];
-        let uri = if cmd_string.len() <=1 {
+        let uri = if cmd_string.len() <= 1 {
             "about:blank"
         } else {
             cmd_string[1]
@@ -170,7 +177,7 @@ impl Gui {
         match cmd {
             ":open" => self.load_uri(uri),
             ":open_new" => self.new_tab(uri),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -188,7 +195,11 @@ impl Gui {
             Some(c) => c,
             None => return None,
         };
-        if widget.clone().upcast::<gtk::Widget>().is::<webkit2gtk::WebView>() {
+        if widget
+            .clone()
+            .upcast::<gtk::Widget>()
+            .is::<webkit2gtk::WebView>()
+        {
             Some(widget.clone().downcast::<webkit2gtk::WebView>().unwrap())
         } else {
             None
@@ -201,7 +212,11 @@ impl Gui {
             Some(c) => c,
             None => return None,
         };
-        if widget.clone().upcast::<gtk::Widget>().is::<webkit2gtk::WebView>() {
+        if widget
+            .clone()
+            .upcast::<gtk::Widget>()
+            .is::<webkit2gtk::WebView>()
+        {
             Some(widget.clone().downcast::<webkit2gtk::WebView>().unwrap())
         } else {
             None
@@ -262,10 +277,75 @@ impl Gui {
             }
         }
     }
+
+    pub fn scroll_down(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_down.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_up(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_up.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_page_down(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_page_down.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_page_up(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_page_up.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_half_page_down(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_half_page_down.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_half_page_up(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_half_page_up.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
 }
 
 pub fn run(uri: &str) {
-
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -283,25 +363,28 @@ pub fn run(uri: &str) {
     gui.new_tab(&uri);
     gui.set_window_title();
 
-    gui.command_box.connect_activate(clone!(@weak gui => move |_| {
-	gui.enter_normal_mode();
-        gui.parse_cmd();
-    }));
+    gui.command_box
+        .connect_activate(clone!(@weak gui => move |_| {
+        gui.enter_normal_mode();
+            gui.parse_cmd();
+        }));
 
-    gui.notebook.connect_switch_page(clone!(@weak gui => move |_,_,page| {
-        if let Some(webview) = gui.get_webview_for_nth(page) {
-            if let Some(title) = webview.get_title() {
-                gui.window.set_title(&format!("RWB - {}", &title));
+    gui.notebook
+        .connect_switch_page(clone!(@weak gui => move |_,_,page| {
+            if let Some(webview) = gui.get_webview_for_nth(page) {
+                if let Some(title) = webview.get_title() {
+                    gui.window.set_title(&format!("RWB - {}", &title));
+                }
             }
-        }
-    }));
+        }));
 
-    gui.notebook.connect_page_removed(clone!(@weak gui => move |_,_,_| {
-        if gui.notebook.get_children().len() == 0 {
-            gtk::main_quit();
-            Inhibit(false);
-        }
-    }));
+    gui.notebook
+        .connect_page_removed(clone!(@weak gui => move |_,_,_| {
+            if gui.notebook.get_children().len() == 0 {
+                gtk::main_quit();
+                Inhibit(false);
+            }
+        }));
 
     let clone = gui.clone();
     gui.window.connect_key_release_event(move |_, gdk| {
