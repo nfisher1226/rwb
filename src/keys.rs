@@ -10,7 +10,7 @@ const W: u16 = 25;
 //const E: u16 = 26
 const R: u16 = 27;
 const T: u16 = 28;
-//const Y: u16 = 29;
+const Y: u16 = 29;
 const U: u16 = 30;
 const I: u16 = 31;
 const O: u16 = 32;
@@ -70,16 +70,19 @@ impl Key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
                     O => gui.get_cmd(),
-                    H => gui.go_back(),
-                    L => gui.go_forward(),
+                    U => gui.go_back(),
                     I => gui.enter_insert_mode(),
                     J => gui.scroll_down(),
                     K => gui.scroll_up(),
+                    H => gui.scroll_left(),
+                    L => gui.scroll_right(),
+                    Y => gui.copy_url(),
                     _ => {}
                 }
             } else if self.ctrl && !self.shift {
                 // Ctrl
                 match self.key {
+                    R => gui.go_forward(),
                     F => gui.scroll_page_down(),
                     B => gui.scroll_page_up(),
                     D => gui.scroll_half_page_down(),
@@ -90,9 +93,18 @@ impl Key {
                 // Shift
                 match self.key {
                     O => gui.get_cmd_new(),
-                    J => gui.next_tab(),
-                    K => gui.prev_tab(),
+                    L => gui.next_tab(),
+                    H => gui.prev_tab(),
+                    J => gui.scroll_bottom(),
+                    K => gui.scroll_top(),
                     COLON => gui.get_cmd_empty(),
+                    _ => {}
+                }
+            } else if self.ctrl && self.shift {
+                // Ctrl-Shift
+                match self.key {
+                    J => gui.scroll_bottom(),
+                    K => gui.scroll_top(),
                     _ => {}
                 }
             }

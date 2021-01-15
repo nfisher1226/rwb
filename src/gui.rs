@@ -3,7 +3,7 @@ use crate::gio::Cancellable;
 use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
 use crate::gtk::WindowType::Toplevel;
-use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
+use crate::gtk::{prelude::*, Clipboard, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
 use crate::webkit2gtk::{JavascriptResult, LoadEvent, WebViewExt};
 
@@ -278,6 +278,15 @@ impl Gui {
         }
     }
 
+    pub fn copy_url(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            if let Some(uri) = web_view.get_uri() {
+                let clipboard = gtk::Clipboard::get(&gdk::SELECTION_CLIPBOARD);
+                clipboard.set_text(&uri);
+            }
+        }
+    }
+
     pub fn scroll_down(&self) {
         if let Some(web_view) = self.get_current_webview() {
             let cancellable = gio::Cancellable::new();
@@ -293,6 +302,28 @@ impl Gui {
         if let Some(web_view) = self.get_current_webview() {
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/scroll_up.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_right(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_right.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_left(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_left.js");
             web_view.run_javascript(&script, Some(&cancellable), |result| match result {
                 Ok(_) => {}
                 Err(error) => println!("{}", error),
@@ -337,6 +368,28 @@ impl Gui {
         if let Some(web_view) = self.get_current_webview() {
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/scroll_half_page_up.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_bottom(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_bottom.js");
+            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                Ok(_) => {}
+                Err(error) => println!("{}", error),
+            });
+        }
+    }
+
+    pub fn scroll_top(&self) {
+        if let Some(web_view) = self.get_current_webview() {
+            let cancellable = gio::Cancellable::new();
+            let script = include_str!("scripts/scroll_top.js");
             web_view.run_javascript(&script, Some(&cancellable), |result| match result {
                 Ok(_) => {}
                 Err(error) => println!("{}", error),
