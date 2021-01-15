@@ -63,35 +63,38 @@ impl Gui {
         web_view.load_uri(&parse_url(uri));
         let host = get_tab_label(&uri);
         self.notebook.set_tab_label_text(&web_view, &host);
+        self.notebook.set_tab_reorderable(&web_view, true);
         self.hide_cmd_box();
         let window = self.window.clone();
         let notebook = self.notebook.clone();
-        let mode = self.mode.borrow().to_string();
+        let mode = self.mode.clone();
         web_view.connect_load_changed(clone!(@weak web_view => move |_,load_event| {
-                if let Some(uri) = web_view.get_uri() {
-            let uri = uri.to_string();
-                    let uri = if uri.len() > 50 {
-                            format!("{}... ", &uri[..50])
+            if let Some(uri) = web_view.get_uri() {
+                let uri = uri.to_string();
+                let uri = if uri.len() > 50 {
+                    format!("{}... ", &uri[..50])
+                } else {
+                    format!("{} ", uri)
+                };
+                let host = get_tab_label(&uri);
+                notebook.set_tab_label_text(&web_view, &host);
+                if tab == notebook.get_current_page() {
+                    if let Some(title) = web_view.get_title() {
+                        window.set_title(&format!("RWB - {}", &title));
                     } else {
-                            format!("{} ", uri)
-                    };
-                    let host = get_tab_label(&uri);
-                    notebook.set_tab_label_text(&web_view, &host);
-                    if tab == notebook.get_current_page() {
-                        if let Some(title) = web_view.get_title() {
-                                window.set_title(&format!("RWB - {}", &title));
-                        } else {
-                                window.set_title(&format!("RWB - {}", &uri));
-                        }
+                        window.set_title(&format!("RWB - {}", &uri));
+                    }
+                }
             }
-            }
-                if  load_event == LoadEvent::Finished && &mode == "normal" {
-                    let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/disable_forms.js");
-                    web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                            Ok(_) => {},
-                            Err(error) => println!("{}", error),
-                    });
+            let clone = mode.borrow().to_string();
+            if  load_event == LoadEvent::Finished && &clone == "normal" {
+                let cancellable = gio::Cancellable::new();
+                let script = include_str!("scripts/disable_forms.js");
+                web_view.run_javascript(&script, Some(&cancellable), |result| match result {
+                    Ok(_) => {},
+                    Err(error) => println!("{}", error),
+                });
+                mode.swap(&RefCell::new(String::from("normal")));
             }
         }));
     }
@@ -179,6 +182,7 @@ impl Gui {
             ":open_new" => self.new_tab(uri),
             _ => {}
         }
+        self.enter_normal_mode();
     }
 
     pub fn hide_cmd_box(&self) {
