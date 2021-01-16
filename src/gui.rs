@@ -65,38 +65,6 @@ impl Gui {
         self.notebook.set_tab_label_text(&web_view, &host);
         self.notebook.set_tab_reorderable(&web_view, true);
         self.hide_cmd_box();
-        let window = self.window.clone();
-        let notebook = self.notebook.clone();
-        let mode = self.mode.clone();
-        web_view.connect_load_changed(clone!(@weak web_view => move |_,load_event| {
-            if let Some(uri) = web_view.get_uri() {
-                let uri = uri.to_string();
-                let uri = if uri.len() > 50 {
-                    format!("{}... ", &uri[..50])
-                } else {
-                    format!("{} ", uri)
-                };
-                let host = get_tab_label(&uri);
-                notebook.set_tab_label_text(&web_view, &host);
-                if tab == notebook.get_current_page() {
-                    if let Some(title) = web_view.get_title() {
-                        window.set_title(&format!("RWB - {}", &title));
-                    } else {
-                        window.set_title(&format!("RWB - {}", &uri));
-                    }
-                }
-            }
-            let clone = mode.borrow().to_string();
-            if  load_event == LoadEvent::Finished && &clone == "normal" {
-                let cancellable = gio::Cancellable::new();
-                let script = include_str!("scripts/disable_forms.js");
-                web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                    Ok(_) => {},
-                    Err(error) => println!("{}", error),
-                });
-                mode.swap(&RefCell::new(String::from("normal")));
-            }
-        }));
     }
 
     pub fn close_tab(&self) {
@@ -432,6 +400,42 @@ pub fn run(uri: &str) {
                 if let Some(title) = webview.get_title() {
                     gui.window.set_title(&format!("RWB - {}", &title));
                 }
+            }
+        }));
+
+    gui.notebook
+        .connect_page_added(clone!(@weak gui => move |_,web_view,tab| {
+            if let web_view = web_view
+                .clone()
+                .downcast::<webkit2gtk::WebView>()
+                .unwrap() {
+                /*web_view.connect_create(clone!(@weak gui |_,action| {
+                    if let Some(request) = action.get_request() {
+                        println!("{}", request);
+                    }
+                }));*/
+                web_view.connect_load_changed(clone!(@weak web_view, @weak gui, @strong tab => move |_,load_event| {
+                    if let Some(uri) = web_view.get_uri() {
+                        let uri = uri.to_string();
+                        let uri = if uri.len() > 50 {
+                            format!("{}... ", &uri[..50])
+                        } else {
+                            format!("{} ", uri)
+                        };
+                        let host = get_tab_label(&uri);
+                        gui.notebook.set_tab_label_text(&web_view, &host);
+                        if Some(tab) == gui.notebook.get_current_page() {
+                            if let Some(title) = web_view.get_title() {
+                                gui.window.set_title(&format!("RWB - {}", &title));
+                            } else {
+                                gui.window.set_title(&format!("RWB - {}", &uri));
+                            }
+                        }
+                    }
+                    if  load_event == LoadEvent::Finished && &gui.mode.borrow().to_string() == "normal" {
+                        gui.enter_normal_mode();
+                    }
+                }));
             }
         }));
 
