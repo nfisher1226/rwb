@@ -5,6 +5,14 @@ use std::rc::Rc;
 const ESC: u16 = 9;
 const TAB: u16 = 23;
 const COLON: u16 = 47;
+const PAGE_UP: u16 = 112;
+const PAGE_DOWN: u16 = 117;
+const UP: u16 = 111;
+const DOWN: u16 = 116;
+const LEFT: u16 = 113;
+const RIGHT: u16 = 114;
+const HOME: u16 = 110;
+const END: u16 = 115;
 const Q: u16 = 24;
 const W: u16 = 25;
 //const E: u16 = 26
@@ -77,6 +85,14 @@ impl Key {
                     H => gui.scroll_left(),
                     L => gui.scroll_right(),
                     Y => gui.copy_url(),
+                    PAGE_UP => gui.scroll_page_up(),
+                    PAGE_DOWN => gui.scroll_page_down(),
+                    UP => gui.scroll_up(),
+                    DOWN => gui.scroll_down(),
+                    LEFT => gui.scroll_left(),
+                    RIGHT => gui.scroll_right(),
+                    HOME => gui.scroll_top(),
+                    END => gui.scroll_bottom(),
                     _ => {}
                 }
             } else if self.ctrl && !self.shift {

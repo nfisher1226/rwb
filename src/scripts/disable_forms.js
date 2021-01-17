@@ -1,3 +1,5 @@
 document.onkeydown = function (e) {
-  return false;
+  if (e.keyCode != 9) {
+    return false;
+  }
 }

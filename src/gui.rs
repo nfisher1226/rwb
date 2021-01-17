@@ -59,7 +59,6 @@ impl Gui {
         let web_view = webkit2gtk::WebView::new();
         web_view.show();
         self.notebook.add(&web_view);
-        let tab = self.notebook.page_num(&web_view);
         web_view.load_uri(&parse_url(uri));
         let host = get_tab_label(&uri);
         self.notebook.set_tab_label_text(&web_view, &host);
@@ -405,38 +404,37 @@ pub fn run(uri: &str) {
 
     gui.notebook
         .connect_page_added(clone!(@weak gui => move |_,web_view,tab| {
-            if let web_view = web_view
+            let web_view = web_view
                 .clone()
                 .downcast::<webkit2gtk::WebView>()
-                .unwrap() {
-                /*web_view.connect_create(clone!(@weak gui |_,action| {
-                    if let Some(request) = action.get_request() {
-                        println!("{}", request);
-                    }
-                }));*/
-                web_view.connect_load_changed(clone!(@weak web_view, @weak gui, @strong tab => move |_,load_event| {
-                    if let Some(uri) = web_view.get_uri() {
-                        let uri = uri.to_string();
-                        let uri = if uri.len() > 50 {
-                            format!("{}... ", &uri[..50])
+                .unwrap();
+            /*web_view.connect_create(clone!(@weak gui |_,action| {
+                if let Some(request) = action.get_request() {
+                    println!("{}", request);
+                }
+            }));*/
+            web_view.connect_load_changed(clone!(@weak web_view, @weak gui, @strong tab => move |_,load_event| {
+                if let Some(uri) = web_view.get_uri() {
+                    let uri = uri.to_string();
+                    let uri = if uri.len() > 50 {
+                        format!("{}... ", &uri[..50])
+                    } else {
+                        format!("{} ", uri)
+                    };
+                    let host = get_tab_label(&uri);
+                    gui.notebook.set_tab_label_text(&web_view, &host);
+                    if Some(tab) == gui.notebook.get_current_page() {
+                        if let Some(title) = web_view.get_title() {
+                            gui.window.set_title(&format!("RWB - {}", &title));
                         } else {
-                            format!("{} ", uri)
-                        };
-                        let host = get_tab_label(&uri);
-                        gui.notebook.set_tab_label_text(&web_view, &host);
-                        if Some(tab) == gui.notebook.get_current_page() {
-                            if let Some(title) = web_view.get_title() {
-                                gui.window.set_title(&format!("RWB - {}", &title));
-                            } else {
-                                gui.window.set_title(&format!("RWB - {}", &uri));
-                            }
+                            gui.window.set_title(&format!("RWB - {}", &uri));
                         }
                     }
-                    if  load_event == LoadEvent::Finished && &gui.mode.borrow().to_string() == "normal" {
-                        gui.enter_normal_mode();
-                    }
-                }));
-            }
+                }
+                if  load_event == LoadEvent::Finished && &gui.mode.borrow().to_string() == "normal" {
+                    gui.enter_normal_mode();
+                }
+            }));
         }));
 
     gui.notebook
