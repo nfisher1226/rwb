@@ -108,12 +108,26 @@ impl Gui {
     }
 
     pub fn enter_cmd_mode(&self) {
+        if self.mode.borrow().as_str() == "insert" {
+            let uri = match self.get_current_uri() {
+                Some(c) => c,
+                None => String::from("unknown"),
+            };
+            if let Some(current_web_view) = self.get_current_webview() {
+                self.notebook.set_tab_label_text(&current_web_view, &get_tab_label(&uri));
+            }
+        }
         self.mode.swap(&RefCell::new(String::from("command")));
     }
 
     pub fn enter_normal_mode(&self) {
         self.mode.swap(&RefCell::new(String::from("normal")));
+        let uri = match self.get_current_uri() {
+            Some(c) => c,
+            None => String::from("unknown"),
+        };
         if let Some(current_web_view) = self.get_current_webview() {
+            self.notebook.set_tab_label_text(&current_web_view, &get_tab_label(&uri));
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/disable_forms.js");
             current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
@@ -125,7 +139,15 @@ impl Gui {
 
     pub fn enter_insert_mode(&self) {
         self.mode.swap(&RefCell::new(String::from("insert")));
+        let uri = match self.get_current_uri() {
+            Some(c) => c,
+            None => String::from("unknown"),
+        };
+        let label_text = format!("<span foreground=\"white\" background=\"green\">{} [insert]</span>", get_tab_label(&uri));
+        let tab_label = gtk::Label::new(None);
+        tab_label.set_markup(&label_text);
         if let Some(current_web_view) = self.get_current_webview() {
+            self.notebook.set_tab_label(&current_web_view, Some(&tab_label));
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/enable_forms.js");
             current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
@@ -189,6 +211,18 @@ impl Gui {
             .is::<webkit2gtk::WebView>()
         {
             Some(widget.clone().downcast::<webkit2gtk::WebView>().unwrap())
+        } else {
+            None
+        }
+    }
+
+    fn get_current_uri(&self) -> Option<String> {
+        if let Some(web_view) = self.get_current_webview() {
+            if let Some(uri) = web_view.get_uri() {
+                Some(String::from(uri))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -377,6 +411,8 @@ pub fn run(uri: &str) {
     let gui = Rc::new(Gui::new());
 
     let vbox = gtk::Box::new(Vertical, 0);
+    gui.notebook.set_scrollable(true);
+    gui.notebook.set_property_enable_popup(true);
     vbox.pack_start(&gui.notebook, true, true, 0);
     vbox.pack_start(&gui.command_box, false, false, 0);
 
