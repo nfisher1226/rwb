@@ -472,46 +472,21 @@ pub fn run(uri: &str) {
 
     gui.notebook
         .connect_switch_page(clone!(@weak gui => move |_,_,page| {
-            if let Some(webview) = gui.get_webview_for_nth(page) {
-                if let Some(title) = webview.get_title() {
+            gui.enter_normal_mode();
+            if let Some(web_view) = gui.get_webview_for_nth(page) {
+                if let Some(title) = web_view.get_title() {
                     gui.window.set_title(&format!("RWB - {}", &title));
                 }
             }
-        }));
-
-    gui.notebook
-        .connect_page_added(clone!(@weak gui => move |_,web_view,tab| {
-            let web_view = web_view
-                .clone()
-                .downcast::<webkit2gtk::WebView>()
-                .unwrap();
-            /*web_view.connect_create(clone!(@weak gui |_,action| {
-                if let Some(request) = action.get_request() {
-                    println!("{}", request);
-                }
-            }));*/
-            web_view.connect_load_changed(clone!(@weak web_view, @weak gui, @strong tab => move |_,load_event| {
-                if let Some(uri) = web_view.get_uri() {
-                    let uri = uri.to_string();
-                    let uri = if uri.len() > 50 {
-                        format!("{}... ", &uri[..50])
-                    } else {
-                        format!("{} ", uri)
-                    };
-                    let host = get_tab_label(&uri);
-                    gui.notebook.set_tab_label_text(&web_view, &host);
-                    if Some(tab) == gui.notebook.get_current_page() {
-                        if let Some(title) = web_view.get_title() {
-                            gui.window.set_title(&format!("RWB - {}", &title));
-                        } else {
-                            gui.window.set_title(&format!("RWB - {}", &uri));
-                        }
+            let pages = gui.notebook.get_n_pages();
+            for page in 0..pages {
+                if let Some(web_view) = gui.get_webview_for_nth(page) {
+                    if let Some(uri) = web_view.get_uri() {
+                        let host = get_tab_label(&uri);
+                        gui.notebook.set_tab_label_text(&web_view, &host);
                     }
                 }
-                if  load_event == LoadEvent::Finished && &gui.mode.borrow().to_string() == "normal" {
-                    gui.enter_normal_mode();
-                }
-            }));
+            }
         }));
 
     gui.notebook

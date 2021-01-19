@@ -1,13 +1,19 @@
 # RWB
 Web browser written in Rust using a webkit2gtk interface. Minimal keyboard
 driven interface inspired by vim and other browsers such as vimb, dwb and
-qutebrowser.
+qutebrowser. RWB actually aims to have the most minimal *visual* interface
+possible. The idea is that the maximum amount of screen real estate should be
+devoted to the viewport in which the page appears, not to menus, toolbars, status
+bars etc. While this does involve tradeoffs, ie less user feedback, the
+simplicity should be appealing to those who just want to look up some information
+and *get some work done*.
 
 This is an early WIP. It is usable for browsing the web but lacks the ability
 to handle downloads, keep cookies, use any custom settings, etc. While features
 may will be added, an express goal is to keep the program small, fast, and
 usable on embedded platforms and SBC's running wimpy Arm and Risc-V processors.
-To that end, the feature set is unlikely to ever match that of qutebrowser.
+To that end, the feature set is unlikely to ever match that of for instance
+qutebrowser.
 
 ![rwb.png](doc/insert.png)
 
