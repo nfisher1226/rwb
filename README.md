@@ -9,6 +9,8 @@ may will be added, an express goal is to keep the program small, fast, and
 usable on embedded platforms and SBC's running wimpy Arm and Risc-V processors.
 To that end, the feature set is unlikely to ever match that of qutebrowser.
 
+![rwb.png](doc/insert.png)
+
 ### Building
 #### Requirements
 You will need a recent Rust toolchain including Cargo. You will also need the
