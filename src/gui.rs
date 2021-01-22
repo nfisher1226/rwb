@@ -1,3 +1,4 @@
+use crate::CONFIG;
 use crate::gdk::ModifierType;
 use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
@@ -137,7 +138,7 @@ impl Gui {
         self.command_box.show();
         self.command_box.set_text(":");
         self.command_box.grab_focus();
-        self.command_box.set_position(10);
+        self.command_box.set_position(2);
     }
 
     pub fn enter_cmd_mode(&self) {
@@ -194,10 +195,15 @@ impl Gui {
         let cmd_string = self.command_box.get_text().to_string();
         let cmd_string: Vec<&str> = cmd_string.split_whitespace().collect();
         let cmd = cmd_string[0];
-        let uri = if cmd_string.len() <= 1 {
-            "about:blank"
-        } else {
-            cmd_string[1]
+        let uri = match cmd_string.len() {
+            1 => "about:blank",
+            2 => {
+                match CONFIG.quickmarks.get(cmd_string[1]) {
+                    Some(c) => c,
+                    None => cmd_string[1],
+                }
+            }
+            _ => cmd_string[1]
         };
         match cmd {
             ":open" => self.load_uri(uri),
@@ -465,7 +471,7 @@ pub fn run(uri: &str) {
 
     gui.command_box
         .connect_activate(clone!(@weak gui => move |_| {
-        gui.enter_normal_mode();
+            gui.enter_normal_mode();
             gui.parse_cmd();
         }));
 
