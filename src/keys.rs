@@ -1,4 +1,5 @@
 use crate::gui::Gui;
+use crate::CONFIG;
 use std::rc::Rc;
 
 const ESC: u16 = 9;
@@ -64,7 +65,7 @@ impl Key {
                 Q => gtk::main_quit(),
                 W => gui.close_tab(),
                 N => gui.new_tab("about:blank"),
-                T => gui.new_tab("http://google.com"),
+                T => gui.new_tab(CONFIG.global.get("homepage").unwrap()),
                 TAB => gui.next_tab(),
                 _ => {}
             }
