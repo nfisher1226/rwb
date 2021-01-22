@@ -1,11 +1,10 @@
 use crate::gdk::ModifierType;
-use crate::gio::Cancellable;
 use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
 use crate::gtk::WindowType::Toplevel;
-use crate::gtk::{prelude::*, Clipboard, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
+use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
-use crate::webkit2gtk::{JavascriptResult, LoadEvent, WebViewExt};
+use crate::webkit2gtk::{LoadEvent, WebViewExt};
 
 use std::cell::RefCell;
 use std::rc::Rc;

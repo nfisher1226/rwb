@@ -1,0 +1,11 @@
+[global]
+homepage = "https://duckduckgo.com"
+default_search = "https://duckduckgo.com/?q={}&ia=web"
+
+[quickmarks]
+gg = "https://google.com"
+ddg = "https://duckduckgo.com"
+
+[searchengines]
+ddg = "https://duckduckgo.com/?q={}&ia=web"
+gg = "https://www.google.com/search?q={}"

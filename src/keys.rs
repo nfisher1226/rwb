@@ -1,5 +1,4 @@
 use crate::gui::Gui;
-use std::cell::RefCell;
 use std::rc::Rc;
 
 const ESC: u16 = 9;
