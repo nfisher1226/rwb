@@ -1,4 +1,3 @@
-use crate::CONFIG;
 use crate::gdk::ModifierType;
 use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
@@ -10,6 +9,8 @@ use crate::webkit2gtk::{LoadEvent, WebViewExt};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::command;
+use crate::command::Command;
 use crate::keys::Key;
 
 pub struct Gui {
@@ -17,21 +18,6 @@ pub struct Gui {
     pub notebook: gtk::Notebook,
     pub command_box: gtk::Entry,
     pub mode: RefCell<String>,
-}
-
-fn parse_url(url: &str) -> String {
-    let url_split = url.split(':').collect::<Vec<&str>>();
-    if url_split.len() < 1 {
-        return String::from("about:blank");
-    }
-    match url_split[0] {
-        "http" => url.to_string(),
-        "https" => url.to_string(),
-        "file" => url.to_string(),
-        "ftp" => url.to_string(),
-        "about" => url.to_string(),
-        _ => format!("http://{}", url),
-    }
 }
 
 fn get_tab_label(uri: &str) -> String {
@@ -59,7 +45,7 @@ impl Gui {
         let web_view = webkit2gtk::WebView::new();
         web_view.show();
         self.notebook.add(&web_view);
-        web_view.load_uri(&parse_url(uri));
+        web_view.load_uri(&command::parse_url(uri));
         let host = get_tab_label(&uri);
         self.notebook.set_tab_label_text(&web_view, &host);
         self.notebook.set_tab_reorderable(&web_view, true);
@@ -193,21 +179,10 @@ impl Gui {
 
     fn parse_cmd(&self) {
         let cmd_string = self.command_box.get_text().to_string();
-        let cmd_string: Vec<&str> = cmd_string.split_whitespace().collect();
-        let cmd = cmd_string[0];
-        let uri = match cmd_string.len() {
-            1 => "about:blank",
-            2 => {
-                match CONFIG.quickmarks.get(cmd_string[1]) {
-                    Some(c) => c,
-                    None => cmd_string[1],
-                }
-            }
-            _ => cmd_string[1]
-        };
-        match cmd {
-            ":open" => self.load_uri(uri),
-            ":open_new" => self.new_tab(uri),
+        let command: Command = Command::new(cmd_string);
+        match command.command.as_str() {
+            ":open" => self.load_uri(&command.uri),
+            ":open_new" => self.new_tab(&command.uri),
             _ => {}
         }
         self.enter_normal_mode();
@@ -268,7 +243,7 @@ impl Gui {
     }
 
     fn load_uri(&self, uri: &str) {
-        let parsed_uri = parse_url(uri);
+        let parsed_uri = command::parse_url(uri);
         let tab = self.get_current_tab().unwrap();
         if let Some(web_view) = self.get_webview_for_nth(tab) {
             web_view.load_uri(&parsed_uri);
