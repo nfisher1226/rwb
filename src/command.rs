@@ -25,6 +25,9 @@ impl Command {
     pub fn new(cmd_string: String) -> Command {
         let cmd_string: Vec<&str> = cmd_string.split_whitespace().collect();
         let command = String::from(cmd_string[0]);
+        if command.as_str() == ":quit" {
+            gtk::main_quit();
+        }
         let uri = match cmd_string.len() {
             1 => String::from("about:blank"),
             2 => {

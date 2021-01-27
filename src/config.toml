@@ -1,5 +1,5 @@
 [global]
-homepage = "https://duckduckgo.com"
+homepage = "https://start.duckduckgo.com"
 default_search = "https://duckduckgo.com/?q={}&ia=web"
 
 [quickmarks]
