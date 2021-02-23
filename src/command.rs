@@ -33,9 +33,12 @@ impl Command {
             2 => {
                 match CONFIG.quickmarks.get(cmd_string[1]) {
                     Some(c) => String::from(c),
-                    None => match Url::parse(cmd_string[1]) {
-                        Ok(_) => String::from(cmd_string[1]),
-                        Err(_) => Command::search_default(vec!(cmd_string[1])),
+                    None => {
+                        let url_test = parse_url(cmd_string[1]);
+                        match Url::parse(&url_test) {
+                            Ok(_) => url_test,
+                            Err(_) => Command::search_default(vec!(cmd_string[1])),
+                        }
                     }
                 }
             },
