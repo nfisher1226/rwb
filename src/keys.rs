@@ -77,7 +77,6 @@ impl Key {
                 match self.key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
-                    O => gui.get_cmd(),
                     U => gui.go_back(),
                     I => gui.enter_insert_mode(),
                     J => gui.scroll_down(),
@@ -108,12 +107,10 @@ impl Key {
             } else if !self.ctrl && self.shift {
                 // Shift
                 match self.key {
-                    O => gui.get_cmd_new(),
                     L => gui.next_tab(),
                     H => gui.prev_tab(),
                     J => gui.scroll_bottom(),
                     K => gui.scroll_top(),
-                    COLON => gui.get_cmd_empty(),
                     _ => {}
                 }
             } else if self.ctrl && self.shift {
@@ -123,6 +120,19 @@ impl Key {
                     K => gui.scroll_top(),
                     _ => {}
                 }
+            }
+        }
+    }
+
+    pub fn process_keyrelease(&self, gui: Rc<Gui>) {
+        let mode = gui.mode.borrow().to_string();
+        /* Normal mode */
+        if mode == "normal" {
+            match self.key {
+                O if !self.ctrl && !self.shift => gui.get_cmd(),
+                O if !self.ctrl && self.shift => gui.get_cmd_new(),
+                COLON if !self.ctrl && self.shift => gui.get_cmd_empty(),
+                _ => {}
             }
         }
     }

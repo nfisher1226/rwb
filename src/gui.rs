@@ -488,6 +488,17 @@ pub fn run(uri: &str) {
         Inhibit(false)
     });
 
+    let clone = gui.clone();
+    gui.window.connect_key_release_event(move |_, gdk| {
+        let key = Key {
+            key: gdk.get_keycode().unwrap(),
+            ctrl: gdk.get_state().contains(ModifierType::CONTROL_MASK),
+            shift: gdk.get_state().contains(ModifierType::SHIFT_MASK),
+        };
+        key.process_keyrelease(clone.clone());
+        Inhibit(false)
+    });
+
     gui.window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
