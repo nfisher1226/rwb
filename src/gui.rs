@@ -478,7 +478,7 @@ pub fn run(uri: &str) {
         }));
 
     let clone = gui.clone();
-    gui.window.connect_key_release_event(move |_, gdk| {
+    gui.window.connect_key_press_event(move |_, gdk| {
         let key = Key {
             key: gdk.get_keycode().unwrap(),
             ctrl: gdk.get_state().contains(ModifierType::CONTROL_MASK),

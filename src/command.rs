@@ -17,7 +17,15 @@ pub fn parse_url(url: &str) -> String {
         "file" => url.to_string(),
         "ftp" => url.to_string(),
         "about" => url.to_string(),
-        _ => format!("http://{}", url),
+        _ => {
+            match url.find('.') {
+                Some(_) => format!("http://{}", url),
+                None => {
+                    let url: Vec<&str> = vec![url];
+                    Command::search_default(url)
+                }
+            }
+        }
     }
 }
 
