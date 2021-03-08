@@ -4,19 +4,24 @@ use crate::gtk::Orientation::Vertical;
 use crate::gtk::WindowType::Toplevel;
 use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
-use crate::webkit2gtk::{LoadEvent, WebViewExt};
+use crate::webkit2gtk::{LoadEvent, WebViewExt, WebContext, WebContextExt, CookieManagerExt};
+use webkit2gtk::CookiePersistentStorage::Text;
 
 use std::cell::RefCell;
+use std::process;
 use std::rc::Rc;
 
 use crate::command;
 use crate::command::Command;
+use crate::config;
+use crate::CONFIG;
 use crate::keys::Key;
 
 pub struct Gui {
     pub window: gtk::Window,
     pub notebook: gtk::Notebook,
     pub command_box: gtk::Entry,
+    pub webcontext: webkit2gtk::WebContext,
     pub mode: RefCell<String>,
 }
 
@@ -37,12 +42,19 @@ impl Gui {
             window: gtk::Window::new(Toplevel),
             notebook: gtk::Notebook::new(),
             command_box: gtk::Entry::new(),
+            webcontext: match WebContext::get_default() {
+                Some(c) => c,
+                None => {
+                    eprintln!("Unable to get default web context, exiting now.");
+                    process::exit(1);
+                },
+            },
             mode: RefCell::new(String::from("normal")),
         }
     }
 
     pub fn new_tab(&self, uri: &str) {
-        let web_view = webkit2gtk::WebView::new();
+        let web_view = webkit2gtk::WebView::with_context(&self.webcontext);
         web_view.show();
         self.notebook.add(&web_view);
         web_view.load_uri(&command::parse_url(uri));
@@ -422,6 +434,18 @@ impl Gui {
             });
         }
     }
+    fn setup_cookies_storage(&self) {
+        let cookiemgr = match self.webcontext.get_cookie_manager() {
+            Some(c) => c,
+            None => {
+                eprintln!("Unable to get cookie manager, exiting");
+                process::exit(1);
+            },
+        };
+        let mut cookiesfile = config::get_config_dir();
+        cookiesfile.push("cookies");
+        cookiemgr.set_persistent_storage(cookiesfile.to_str().unwrap(), Text);
+    }
 }
 
 pub fn run(uri: &str) {
@@ -430,6 +454,12 @@ pub fn run(uri: &str) {
         return;
     }
     let gui = Rc::new(Gui::new());
+
+    match CONFIG.global.get("allow_persistent_cookies") {
+        None => gui.setup_cookies_storage(),
+        Some(c) if c == "true" => gui.setup_cookies_storage(),
+        Some(_) => {},
+    };
 
     let vbox = gtk::Box::new(Vertical, 0);
     gui.notebook.set_scrollable(true);
@@ -441,6 +471,7 @@ pub fn run(uri: &str) {
     gui.window.add(&vbox);
     gui.window.show_all();
     gui.command_box.hide();
+
     gui.new_tab(&uri);
     gui.set_window_title();
 

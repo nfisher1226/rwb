@@ -13,17 +13,22 @@ pub struct Config {
     pub searchengines: HashMap<String, String>
 }
 
+pub fn get_config_dir() -> PathBuf {
+    let mut configdir: PathBuf = match get_config_home() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("{}", e);
+            process::exit(1);
+        }
+    };
+    let progname = env!("CARGO_PKG_NAME");
+    configdir.push(progname);
+    configdir
+}
+
 impl Config {
     pub fn get() -> Config {
-        let mut config: PathBuf = match get_config_home() {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("{}", e);
-                process::exit(1);
-            }
-        };
-        let progname = env!("CARGO_PKG_NAME");
-        config.push(progname);
+        let mut config: PathBuf = get_config_dir();
         config.push("config.toml");
         let config = if config.exists() {
             match fs::read_to_string(config) {
