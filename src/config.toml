@@ -1,6 +1,6 @@
-[global]
 homepage = "https://start.duckduckgo.com"
 default_search = "https://duckduckgo.com/?q={}&ia=web"
+allow_persistent_cookies = true
 
 [quickmarks]
 gg = "https://google.com"

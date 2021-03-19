@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic)]
 use serde::Deserialize;
 use xdg_basedir::*;
 
@@ -8,9 +9,12 @@ use std::{env, process};
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
+    pub allow_persistent_cookies: Option<bool>,
+    pub homepage: Option<String>,
+    pub default_search: Option<String>,
     pub global: HashMap<String, String>,
     pub quickmarks: HashMap<String, String>,
-    pub searchengines: HashMap<String, String>
+    pub searchengines: HashMap<String, String>,
 }
 
 pub fn get_config_dir() -> PathBuf {

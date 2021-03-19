@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic)]
 use getopts::Options;
 extern crate gdk;
 extern crate gio;
@@ -19,9 +20,7 @@ use config::Config;
 extern crate lazy_static;
 
 lazy_static! {
-    static ref CONFIG: Config = {
-        Config::get()
-    };
+    static ref CONFIG: Config = Config::get();
 }
 
 fn main() {
@@ -40,9 +39,9 @@ fn main() {
     let uri = if args.free.len() == 1 {
         &args.free[0]
     } else {
-        match CONFIG.global.get("homepage") {
+        match &CONFIG.homepage {
             Some(c) => c,
-            None => "https://duckduckgo.com"
+            None => "https://duckduckgo.com",
         }
     };
     gui::run(uri);

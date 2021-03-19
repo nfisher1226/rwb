@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic)]
 use crate::gui::Gui;
 use crate::CONFIG;
 use std::rc::Rc;
@@ -52,12 +53,9 @@ impl Key {
         /* Global - all modes */
         if !self.ctrl && !self.shift {
             // No modifiers
-            match self.key {
-                ESC => {
-                    gui.enter_normal_mode();
-                    gui.hide_cmd_box();
-                }
-                _ => {}
+            if let ESC = self.key {
+                gui.enter_normal_mode();
+                gui.hide_cmd_box();
             }
         } else if self.ctrl && !self.shift {
             // Ctrl
@@ -79,17 +77,13 @@ impl Key {
                     R => gui.reload_page(),
                     U => gui.go_back(),
                     I => gui.enter_insert_mode(),
-                    J => gui.scroll_down(),
-                    K => gui.scroll_up(),
-                    H => gui.scroll_left(),
-                    L => gui.scroll_right(),
+                    J | DOWN => gui.scroll_down(),
+                    K | UP => gui.scroll_up(),
+                    H | LEFT => gui.scroll_left(),
+                    L | RIGHT => gui.scroll_right(),
                     Y => gui.copy_url(),
                     PAGE_UP => gui.scroll_page_up(),
                     PAGE_DOWN => gui.scroll_page_down(),
-                    UP => gui.scroll_up(),
-                    DOWN => gui.scroll_down(),
-                    LEFT => gui.scroll_left(),
-                    RIGHT => gui.scroll_right(),
                     HOME => gui.scroll_top(),
                     END => gui.scroll_bottom(),
                     _ => {}

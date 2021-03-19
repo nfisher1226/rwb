@@ -1,10 +1,11 @@
+#![warn(clippy::all, clippy::pedantic)]
 use crate::gdk::ModifierType;
 use crate::glib::clone;
 use crate::gtk::Orientation::Vertical;
 use crate::gtk::WindowType::Toplevel;
 use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
-use crate::webkit2gtk::{LoadEvent, WebViewExt, WebContext, WebContextExt, CookieManagerExt};
+use crate::webkit2gtk::{CookieManagerExt, LoadEvent, WebContext, WebContextExt, WebViewExt};
 use webkit2gtk::CookiePersistentStorage::Text;
 
 use std::cell::RefCell;
@@ -14,8 +15,8 @@ use std::rc::Rc;
 use crate::command;
 use crate::command::Command;
 use crate::config;
-use crate::CONFIG;
 use crate::keys::Key;
+use crate::CONFIG;
 
 pub struct Gui {
     pub window: gtk::Window,
@@ -26,11 +27,11 @@ pub struct Gui {
 }
 
 fn get_tab_label(uri: &str) -> String {
-    let url = match Url::parse(uri) {
+    let parsed_uri = match Url::parse(uri) {
         Ok(c) => c,
         Err(_) => return uri.to_string(),
     };
-    match url.host_str() {
+    match parsed_uri.host_str() {
         Some(c) => c.to_string(),
         None => uri.to_string(),
     }
@@ -42,12 +43,11 @@ impl Gui {
             window: gtk::Window::new(Toplevel),
             notebook: gtk::Notebook::new(),
             command_box: gtk::Entry::new(),
-            webcontext: match WebContext::get_default() {
-                Some(c) => c,
-                None => {
-                    eprintln!("Unable to get default web context, exiting now.");
-                    process::exit(1);
-                },
+            webcontext: if let Some(c) = WebContext::get_default() {
+                c
+            } else {
+                eprintln!("Unable to get default web context, exiting now.");
+                process::exit(1);
             },
             mode: RefCell::new(String::from("normal")),
         }
@@ -146,20 +146,22 @@ impl Gui {
                 None => String::from("unknown"),
             };
             if let Some(current_web_view) = self.get_current_webview() {
-                self.notebook.set_tab_label_text(&current_web_view, &get_tab_label(&uri));
+                self.notebook
+                    .set_tab_label_text(&current_web_view, &get_tab_label(&uri));
             }
         }
-        self.mode.swap(&RefCell::new(String::from("command")));
+        self.mode.replace(String::from("command"));
     }
 
     pub fn enter_normal_mode(&self) {
-        self.mode.swap(&RefCell::new(String::from("normal")));
+        self.mode.replace(String::from("normal"));
         let uri = match self.get_current_uri() {
             Some(c) => c,
             None => String::from("unknown"),
         };
         if let Some(current_web_view) = self.get_current_webview() {
-            self.notebook.set_tab_label_text(&current_web_view, &get_tab_label(&uri));
+            self.notebook
+                .set_tab_label_text(&current_web_view, &get_tab_label(&uri));
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/disable_forms.js");
             current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
@@ -170,16 +172,20 @@ impl Gui {
     }
 
     pub fn enter_insert_mode(&self) {
-        self.mode.swap(&RefCell::new(String::from("insert")));
+        self.mode.replace(String::from("insert"));
         let uri = match self.get_current_uri() {
             Some(c) => c,
             None => String::from("unknown"),
         };
-        let label_text = format!("<span foreground=\"white\" background=\"green\">{} [insert]</span>", get_tab_label(&uri));
+        let label_text = format!(
+            "<span foreground=\"white\" background=\"green\">{} [insert]</span>",
+            get_tab_label(&uri)
+        );
         let tab_label = gtk::Label::new(None);
         tab_label.set_markup(&label_text);
         if let Some(current_web_view) = self.get_current_webview() {
-            self.notebook.set_tab_label(&current_web_view, Some(&tab_label));
+            self.notebook
+                .set_tab_label(&current_web_view, Some(&tab_label));
             let cancellable = gio::Cancellable::new();
             let script = include_str!("scripts/enable_forms.js");
             current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
@@ -219,7 +225,7 @@ impl Gui {
             .upcast::<gtk::Widget>()
             .is::<webkit2gtk::WebView>()
         {
-            Some(widget.clone().downcast::<webkit2gtk::WebView>().unwrap())
+            Some(widget.downcast::<webkit2gtk::WebView>().unwrap())
         } else {
             None
         }
@@ -236,7 +242,7 @@ impl Gui {
             .upcast::<gtk::Widget>()
             .is::<webkit2gtk::WebView>()
         {
-            Some(widget.clone().downcast::<webkit2gtk::WebView>().unwrap())
+            Some(widget.downcast::<webkit2gtk::WebView>().unwrap())
         } else {
             None
         }
@@ -435,12 +441,11 @@ impl Gui {
         }
     }
     fn setup_cookies_storage(&self) {
-        let cookiemgr = match self.webcontext.get_cookie_manager() {
-            Some(c) => c,
-            None => {
-                eprintln!("Unable to get cookie manager, exiting");
-                process::exit(1);
-            },
+        let cookiemgr = if let Some(c) = self.webcontext.get_cookie_manager() {
+            c
+        } else {
+            eprintln!("Unable to get cookie manager, exiting");
+            process::exit(1);
         };
         let mut cookiesfile = config::get_config_dir();
         cookiesfile.push("cookies");
@@ -455,10 +460,10 @@ pub fn run(uri: &str) {
     }
     let gui = Rc::new(Gui::new());
 
-    match CONFIG.global.get("allow_persistent_cookies") {
+    match CONFIG.allow_persistent_cookies {
         None => gui.setup_cookies_storage(),
-        Some(c) if c == "true" => gui.setup_cookies_storage(),
-        Some(_) => {},
+        Some(c) if c => gui.setup_cookies_storage(),
+        Some(_) => {}
     };
 
     let vbox = gtk::Box::new(Vertical, 0);
@@ -502,9 +507,8 @@ pub fn run(uri: &str) {
 
     gui.notebook
         .connect_page_removed(clone!(@weak gui => move |_,_,_| {
-            if gui.notebook.get_children().len() == 0 {
+            if gui.notebook.get_children().is_empty() {
                 gtk::main_quit();
-                Inhibit(false);
             }
         }));
 

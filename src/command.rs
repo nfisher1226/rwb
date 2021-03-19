@@ -1,5 +1,6 @@
-use crate::CONFIG;
+#![warn(clippy::all, clippy::pedantic)]
 use crate::url::Url;
+use crate::CONFIG;
 
 pub struct Command {
     pub command: String,
@@ -12,18 +13,13 @@ pub fn parse_url(url: &str) -> String {
         return String::from("about:blank");
     }
     match url_split[0] {
-        "http" => url.to_string(),
-        "https" => url.to_string(),
-        "file" => url.to_string(),
-        "ftp" => url.to_string(),
-        "about" => url.to_string(),
-        _ => {
-            match url.find('.') {
-                Some(_) => format!("http://{}", url),
-                None => {
-                    let url: Vec<&str> = vec![url];
-                    Command::search_default(url)
-                }
+        "http" | "https" | "file" | "ftp" | "about" => url.to_string(),
+        __ => {
+            if let Some(_) = url.find('.') {
+                format!("http://{}", url)
+            } else {
+                let url: Vec<&str> = vec![url];
+                Command::search_default(url)
             }
         }
     }
@@ -38,40 +34,33 @@ impl Command {
         }
         let uri = match cmd_string.len() {
             1 => String::from("about:blank"),
-            2 => {
-                match CONFIG.quickmarks.get(cmd_string[1]) {
-                    Some(c) => String::from(c),
-                    None => {
-                        let url_test = parse_url(cmd_string[1]);
-                        match Url::parse(&url_test) {
-                            Ok(_) => url_test,
-                            Err(_) => Command::search_default(vec!(cmd_string[1])),
-                        }
+            2 => match CONFIG.quickmarks.get(cmd_string[1]) {
+                Some(c) => String::from(c),
+                None => {
+                    let url_test = parse_url(cmd_string[1]);
+                    match Url::parse(&url_test) {
+                        Ok(_) => url_test,
+                        Err(_) => Command::search_default(vec![cmd_string[1]]),
                     }
                 }
             },
-            n if n > 2 => {
-                match CONFIG.searchengines.get(cmd_string[1]) {
-                    Some(c) => {
-                        let search = &cmd_string[2..];
-                        Command::search_custom(String::from(c), search.to_vec())
-                    },
-                    None => {
-                        let search = &cmd_string[1..];
-                        Command::search_default(search.to_vec())
-                    },
+            n if n > 2 => match CONFIG.searchengines.get(cmd_string[1]) {
+                Some(c) => {
+                    let search = &cmd_string[2..];
+                    Command::search_custom(String::from(c), search.to_vec())
+                }
+                None => {
+                    let search = &cmd_string[1..];
+                    Command::search_default(search.to_vec())
                 }
             },
-            _ => String::from(cmd_string[1])
+            _ => String::from(cmd_string[1]),
         };
-        Command {
-            command,
-            uri,
-        }
+        Command { command, uri }
     }
 
     pub fn search_default(search: Vec<&str>) -> String {
-        let engine = match CONFIG.global.get("default_search") {
+        let engine = match &CONFIG.default_search {
             Some(c) => String::from(c),
             None => String::from("https://duckduckgo.com/?q={}&ia=web"),
         };
@@ -83,5 +72,4 @@ impl Command {
         let search = search.join("+");
         engine.replace("{}", &search)
     }
-
 }
