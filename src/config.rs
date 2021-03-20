@@ -7,6 +7,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::{env, process};
 
+use crate::CONFIGDIR;
+
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub homepage: Option<String>,
@@ -31,7 +33,7 @@ pub fn get_config_dir() -> PathBuf {
 
 impl Config {
     pub fn get() -> Config {
-        let mut config: PathBuf = get_config_dir();
+        let mut config = CONFIGDIR.clone();
         config.push("config.toml");
         let config = if config.exists() {
             match fs::read_to_string(config) {

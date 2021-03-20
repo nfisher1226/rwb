@@ -55,14 +55,16 @@ browser anyway...
 * Y - copy current url to clipboard
 
 ## What's working
-Basic browsing functionality, opening and closing tabs and pages, following
-hyperlinks, etc. Navigation within pages works with common vim-like shortcuts.
-Copying the current url to the clipboard.
+* Basic browsing functionality, opening and closing tabs and pages, following
+hyperlinks, etc.
+* Navigation within pages works with common vim-like shortcuts.
+* Copying the current url to the clipboard.
+* Search
+* Quickmarks
+* Cookies
 
 ## What's missing
-There is no file downloading, bookmarking, search functionality, and no ability
-to follow links in a new tab. When a page requests a new window it is currently
-ignored. No session saving, user settings or preferences and no customization
-other than the ability to change the source code.
+* Download handler
+* Follow links in a new tab
 
 Hinting of hyperlinks is not implemented at this time but is a planned feature.

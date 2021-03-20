@@ -6,6 +6,7 @@ use crate::gtk::WindowType::Toplevel;
 use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
 use crate::url::Url;
 use crate::webkit2gtk::{CookieManagerExt, LoadEvent, WebContext, WebContextExt, WebViewExt};
+use getopts::Matches;
 use webkit2gtk::CookiePersistentStorage::Text;
 
 use std::cell::RefCell;
@@ -15,8 +16,9 @@ use std::rc::Rc;
 use crate::command;
 use crate::command::Command;
 use crate::config;
-use crate::keys::Key;
 use crate::CONFIG;
+use crate::CONFIGDIR;
+use crate::keys::Key;
 
 pub struct Gui {
     pub window: gtk::Window,
@@ -446,7 +448,7 @@ impl Gui {
     /// this will be set up as the persistent storage location. Reversing is as
     /// simple as deleting the file.
     fn setup_cookies_storage(&self) {
-        let mut cookiesfile = config::get_config_dir();
+        let mut cookiesfile = CONFIGDIR.clone();
         cookiesfile.push("cookies");
         if cookiesfile.exists() {
             if let Ok(md) = cookiesfile.metadata() {
@@ -464,14 +466,24 @@ impl Gui {
     }
 }
 
-pub fn run(uri: &str) {
+pub fn run(args: Matches) {
+    let uri = if args.free.len() == 1 {
+        &args.free[0]
+    } else {
+        match &CONFIG.homepage {
+            Some(c) => c,
+            None => "https://duckduckgo.com",
+        }
+    };
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
     }
     let gui = Rc::new(Gui::new());
 
-    gui.setup_cookies_storage();
+    if ! args.opt_present("p") {
+        gui.setup_cookies_storage();
+    }
 
     let vbox = gtk::Box::new(Vertical, 0);
     gui.notebook.set_scrollable(true);

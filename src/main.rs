@@ -8,6 +8,7 @@ extern crate url;
 extern crate webkit2gtk;
 
 use std::{env, process};
+use std::path::PathBuf;
 
 mod command;
 mod config;
@@ -21,13 +22,21 @@ extern crate lazy_static;
 
 lazy_static! {
     static ref CONFIG: Config = Config::get();
+    static ref CONFIGDIR: PathBuf = config::get_config_dir();
+}
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} URI [options]", program);
+    print!("{}", opts.usage(&brief));
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let progname = args[0].split('/').last().unwrap();
+    let progname = args[0].split('/').last().unwrap_or("rwb");
     let usage = format!("Usage: {} uri", progname);
-    let opts = Options::new();
+    let mut opts = Options::new();
+    opts.optflag("p", "private", "Private browsing");
+    opts.optflag("h", "help", "Print this help message");
     let args = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(m) => {
@@ -36,13 +45,9 @@ fn main() {
             process::exit(1);
         }
     };
-    let uri = if args.free.len() == 1 {
-        &args.free[0]
-    } else {
-        match &CONFIG.homepage {
-            Some(c) => c,
-            None => "https://duckduckgo.com",
-        }
-    };
-    gui::run(uri);
+    if args.opt_present("h") {
+        print_usage(&progname, opts);
+        return;
+    }
+    gui::run(args);
 }
