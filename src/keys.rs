@@ -63,7 +63,13 @@ impl Key {
                 Q => gtk::main_quit(),
                 W => gui.close_tab(),
                 N => gui.new_tab("about:blank"),
-                T => gui.new_tab(CONFIG.global.get("homepage").unwrap()),
+                T => {
+                    let uri = match &CONFIG.homepage {
+                        Some(c) => c,
+                        None => "https://duckduckgo.com",
+                    };
+                    gui.new_tab(uri);
+                },
                 TAB => gui.next_tab(),
                 _ => {}
             }

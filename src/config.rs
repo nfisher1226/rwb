@@ -13,7 +13,6 @@ use crate::CONFIGDIR;
 pub struct Config {
     pub homepage: Option<String>,
     pub default_search: Option<String>,
-    pub global: HashMap<String, String>,
     pub quickmarks: HashMap<String, String>,
     pub searchengines: HashMap<String, String>,
 }
