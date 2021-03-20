@@ -9,7 +9,6 @@ use std::{env, process};
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub allow_persistent_cookies: Option<bool>,
     pub homepage: Option<String>,
     pub default_search: Option<String>,
     pub global: HashMap<String, String>,

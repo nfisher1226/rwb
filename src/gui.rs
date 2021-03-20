@@ -440,16 +440,27 @@ impl Gui {
             });
         }
     }
+
+    /// By default cookies are not saved across sessions. This behavior can be
+    /// changed if desired by simply creating ~/.config/rwb/cookies. If present,
+    /// this will be set up as the persistent storage location. Reversing is as
+    /// simple as deleting the file.
     fn setup_cookies_storage(&self) {
-        let cookiemgr = if let Some(c) = self.webcontext.get_cookie_manager() {
-            c
-        } else {
-            eprintln!("Unable to get cookie manager, exiting");
-            process::exit(1);
-        };
         let mut cookiesfile = config::get_config_dir();
         cookiesfile.push("cookies");
-        cookiemgr.set_persistent_storage(cookiesfile.to_str().unwrap(), Text);
+        if cookiesfile.exists() {
+            if let Ok(md) = cookiesfile.metadata() {
+                if ! md.permissions().readonly() {
+                    let cookiemgr = if let Some(c) = self.webcontext.get_cookie_manager() {
+                        c
+                    } else {
+                        eprintln!("Unable to get cookie manager, exiting");
+                        process::exit(1);
+                    };
+                    cookiemgr.set_persistent_storage(cookiesfile.to_str().unwrap(), Text);
+                }
+            }
+        }
     }
 }
 
@@ -460,11 +471,7 @@ pub fn run(uri: &str) {
     }
     let gui = Rc::new(Gui::new());
 
-    match CONFIG.allow_persistent_cookies {
-        None => gui.setup_cookies_storage(),
-        Some(c) if c => gui.setup_cookies_storage(),
-        Some(_) => {}
-    };
+    gui.setup_cookies_storage();
 
     let vbox = gtk::Box::new(Vertical, 0);
     gui.notebook.set_scrollable(true);
