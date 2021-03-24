@@ -8,7 +8,6 @@ jobs    = -j8
 # Do not change below here unless you know what you're doing
 VPATH  += src
 src    += Cargo.toml
-src    += cli.yaml
 src    += config.rs
 src    += config.toml
 src    += gui.rs
