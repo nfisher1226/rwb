@@ -15,7 +15,6 @@ use std::rc::Rc;
 
 use crate::command;
 use crate::command::Command;
-use crate::config;
 use crate::CONFIG;
 use crate::CONFIGDIR;
 use crate::keys::Key;

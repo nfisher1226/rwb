@@ -82,7 +82,6 @@ impl Key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
                     U => gui.go_back(),
-                    I => gui.enter_insert_mode(),
                     J | DOWN => gui.scroll_down(),
                     K | UP => gui.scroll_up(),
                     H | LEFT => gui.scroll_left(),
@@ -131,6 +130,7 @@ impl Key {
             match self.key {
                 O if !self.ctrl && !self.shift => gui.get_cmd(),
                 O if !self.ctrl && self.shift => gui.get_cmd_new(),
+                I if !self.ctrl && !self.shift => gui.enter_insert_mode(),
                 COLON if !self.ctrl && self.shift => gui.get_cmd_empty(),
                 _ => {}
             }
