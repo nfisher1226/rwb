@@ -27,7 +27,7 @@ pub struct Gui {
     pub mode: RefCell<String>,
 }
 
-pub enum Scroll {
+pub enum Script {
     Up,
     Down,
     Left,
@@ -38,6 +38,8 @@ pub enum Scroll {
     Bottom,
     HalfPageDown,
     HalfPageUp,
+    EnableForms,
+    DisableForms,
 }
 
 fn get_tab_label(uri: &str) -> String {
@@ -101,11 +103,11 @@ impl Gui {
                     }
                 }
             }
-            if  load_event == LoadEvent::Finished {
+            if load_event == LoadEvent::Finished {
                 let cancellable = gio::Cancellable::new();
                 let script = include_str!("scripts/disable_forms.js");
                 web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                    Ok(_) => {}
+                    Ok(_) => {},
                     Err(error) => println!("{}", error),
                 });
             }
@@ -173,15 +175,10 @@ impl Gui {
             Some(c) => c,
             None => String::from("unknown"),
         };
+        self.run_script(Script::DisableForms);
         if let Some(current_web_view) = self.get_current_webview() {
             self.notebook
                 .set_tab_label_text(&current_web_view, &get_tab_label(&uri));
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/disable_forms.js");
-            current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
         }
     }
 
@@ -197,15 +194,10 @@ impl Gui {
         );
         let tab_label = gtk::Label::new(None);
         tab_label.set_markup(&label_text);
+        self.run_script(Script::EnableForms);
         if let Some(current_web_view) = self.get_current_webview() {
             self.notebook
                 .set_tab_label(&current_web_view, Some(&tab_label));
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/enable_forms.js");
-            current_web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
         }
     }
 
@@ -345,20 +337,22 @@ impl Gui {
         }
     }
 
-    pub fn scroll_page(&self, scroll: Scroll) {
+    pub fn run_script(&self, script: Script) {
         if let Some(web_view) = self.get_current_webview() {
             let cancellable = gio::Cancellable::new();
-            let script = match scroll {
-                Scroll::Up => include_str!("scripts/scroll_up.js"),
-                Scroll::Down => include_str!("scripts/scroll_down.js"),
-                Scroll::Left => include_str!("scripts/scroll_left.js"),
-                Scroll::Right => include_str!("scripts/scroll_right.js"),
-                Scroll::Top => include_str!("scripts/scroll_top.js"),
-                Scroll::Bottom => include_str!("scripts/scroll_bottom.js"),
-                Scroll::PageUp => include_str!("scripts/scroll_page_up.js"),
-                Scroll::PageDown => include_str!("scripts/scroll_page_down.js"),
-                Scroll::HalfPageDown => include_str!("scripts/scroll_half_page_down.js"),
-                Scroll::HalfPageUp => include_str!("scripts/scroll_half_page_up.js"),
+            let script = match script {
+                Script::Up => include_str!("scripts/scroll_up.js"),
+                Script::Down => include_str!("scripts/scroll_down.js"),
+                Script::Left => include_str!("scripts/scroll_left.js"),
+                Script::Right => include_str!("scripts/scroll_right.js"),
+                Script::Top => include_str!("scripts/scroll_top.js"),
+                Script::Bottom => include_str!("scripts/scroll_bottom.js"),
+                Script::PageUp => include_str!("scripts/scroll_page_up.js"),
+                Script::PageDown => include_str!("scripts/scroll_page_down.js"),
+                Script::HalfPageDown => include_str!("scripts/scroll_half_page_down.js"),
+                Script::HalfPageUp => include_str!("scripts/scroll_half_page_up.js"),
+                Script::EnableForms => include_str!("scripts/enable_forms.js"),
+                Script::DisableForms => include_str!("scripts/disable_forms.js"),
             };
             web_view.run_javascript(&script, Some(&cancellable), |result| match result {
                 Ok(_) => {}

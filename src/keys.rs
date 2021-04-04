@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
-use crate::gui::{ Scroll, Gui };
+use crate::gui::{ Script, Gui };
 use crate::CONFIG;
 use std::rc::Rc;
 
@@ -82,25 +82,25 @@ impl Key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
                     U => gui.go_back(),
-                    J | DOWN => gui.scroll_page(Scroll::Down),
-                    K | UP => gui.scroll_page(Scroll::Up),
-                    H | LEFT => gui.scroll_page(Scroll::Left),
-                    L | RIGHT => gui.scroll_page(Scroll::Right),
+                    J | DOWN => gui.run_script(Script::Down),
+                    K | UP => gui.run_script(Script::Up),
+                    H | LEFT => gui.run_script(Script::Left),
+                    L | RIGHT => gui.run_script(Script::Right),
                     Y => gui.copy_url(),
-                    PAGE_UP => gui.scroll_page(Scroll::PageUp),
-                    PAGE_DOWN => gui.scroll_page(Scroll::PageDown),
-                    HOME => gui.scroll_page(Scroll::Top),
-                    END => gui.scroll_page(Scroll::Bottom),
+                    PAGE_UP => gui.run_script(Script::PageUp),
+                    PAGE_DOWN => gui.run_script(Script::PageDown),
+                    HOME => gui.run_script(Script::Top),
+                    END => gui.run_script(Script::Bottom),
                     _ => {}
                 }
             } else if self.ctrl && !self.shift {
                 // Ctrl
                 match self.key {
                     R => gui.go_forward(),
-                    F => gui.scroll_page(Scroll::PageDown),
-                    B => gui.scroll_page(Scroll::PageUp),
-                    D => gui.scroll_page(Scroll::HalfPageDown),
-                    U => gui.scroll_page(Scroll::HalfPageUp),
+                    F => gui.run_script(Script::PageDown),
+                    B => gui.run_script(Script::PageUp),
+                    D => gui.run_script(Script::HalfPageDown),
+                    U => gui.run_script(Script::HalfPageUp),
                     _ => {}
                 }
             } else if !self.ctrl && self.shift {
@@ -108,15 +108,15 @@ impl Key {
                 match self.key {
                     L => gui.next_tab(),
                     H => gui.prev_tab(),
-                    J => gui.scroll_page(Scroll::Bottom),
-                    K => gui.scroll_page(Scroll::Top),
+                    J => gui.run_script(Script::Bottom),
+                    K => gui.run_script(Script::Top),
                     _ => {}
                 }
             } else if self.ctrl && self.shift {
                 // Ctrl-Shift
                 match self.key {
-                    J => gui.scroll_page(Scroll::Bottom),
-                    K => gui.scroll_page(Scroll::Top),
+                    J => gui.run_script(Script::Bottom),
+                    K => gui.run_script(Script::Top),
                     _ => {}
                 }
             }
