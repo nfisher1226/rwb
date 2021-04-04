@@ -27,6 +27,19 @@ pub struct Gui {
     pub mode: RefCell<String>,
 }
 
+pub enum Scroll {
+    Up,
+    Down,
+    Left,
+    Right,
+    PageUp,
+    PageDown,
+    Top,
+    Bottom,
+    HalfPageDown,
+    HalfPageUp,
+}
+
 fn get_tab_label(uri: &str) -> String {
     let parsed_uri = match Url::parse(uri) {
         Ok(c) => c,
@@ -332,109 +345,21 @@ impl Gui {
         }
     }
 
-    pub fn scroll_down(&self) {
+    pub fn scroll_page(&self, scroll: Scroll) {
         if let Some(web_view) = self.get_current_webview() {
             let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_down.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_up(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_up.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_right(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_right.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_left(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_left.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_page_down(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_page_down.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_page_up(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_page_up.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_half_page_down(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_half_page_down.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_half_page_up(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_half_page_up.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_bottom(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_bottom.js");
-            web_view.run_javascript(&script, Some(&cancellable), |result| match result {
-                Ok(_) => {}
-                Err(error) => println!("{}", error),
-            });
-        }
-    }
-
-    pub fn scroll_top(&self) {
-        if let Some(web_view) = self.get_current_webview() {
-            let cancellable = gio::Cancellable::new();
-            let script = include_str!("scripts/scroll_top.js");
+            let script = match scroll {
+                Scroll::Up => include_str!("scripts/scroll_up.js"),
+                Scroll::Down => include_str!("scripts/scroll_down.js"),
+                Scroll::Left => include_str!("scripts/scroll_left.js"),
+                Scroll::Right => include_str!("scripts/scroll_right.js"),
+                Scroll::Top => include_str!("scripts/scroll_top.js"),
+                Scroll::Bottom => include_str!("scripts/scroll_bottom.js"),
+                Scroll::PageUp => include_str!("scripts/scroll_page_up.js"),
+                Scroll::PageDown => include_str!("scripts/scroll_page_down.js"),
+                Scroll::HalfPageDown => include_str!("scripts/scroll_half_page_down.js"),
+                Scroll::HalfPageUp => include_str!("scripts/scroll_half_page_up.js"),
+            };
             web_view.run_javascript(&script, Some(&cancellable), |result| match result {
                 Ok(_) => {}
                 Err(error) => println!("{}", error),

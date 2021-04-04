@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
-use crate::gui::Gui;
+use crate::gui::{ Scroll, Gui };
 use crate::CONFIG;
 use std::rc::Rc;
 
@@ -82,25 +82,25 @@ impl Key {
                     D => gui.close_tab(),
                     R => gui.reload_page(),
                     U => gui.go_back(),
-                    J | DOWN => gui.scroll_down(),
-                    K | UP => gui.scroll_up(),
-                    H | LEFT => gui.scroll_left(),
-                    L | RIGHT => gui.scroll_right(),
+                    J | DOWN => gui.scroll_page(Scroll::Down),
+                    K | UP => gui.scroll_page(Scroll::Up),
+                    H | LEFT => gui.scroll_page(Scroll::Left),
+                    L | RIGHT => gui.scroll_page(Scroll::Right),
                     Y => gui.copy_url(),
-                    PAGE_UP => gui.scroll_page_up(),
-                    PAGE_DOWN => gui.scroll_page_down(),
-                    HOME => gui.scroll_top(),
-                    END => gui.scroll_bottom(),
+                    PAGE_UP => gui.scroll_page(Scroll::PageUp),
+                    PAGE_DOWN => gui.scroll_page(Scroll::PageDown),
+                    HOME => gui.scroll_page(Scroll::Top),
+                    END => gui.scroll_page(Scroll::Bottom),
                     _ => {}
                 }
             } else if self.ctrl && !self.shift {
                 // Ctrl
                 match self.key {
                     R => gui.go_forward(),
-                    F => gui.scroll_page_down(),
-                    B => gui.scroll_page_up(),
-                    D => gui.scroll_half_page_down(),
-                    U => gui.scroll_half_page_up(),
+                    F => gui.scroll_page(Scroll::PageDown),
+                    B => gui.scroll_page(Scroll::PageUp),
+                    D => gui.scroll_page(Scroll::HalfPageDown),
+                    U => gui.scroll_page(Scroll::HalfPageUp),
                     _ => {}
                 }
             } else if !self.ctrl && self.shift {
@@ -108,15 +108,15 @@ impl Key {
                 match self.key {
                     L => gui.next_tab(),
                     H => gui.prev_tab(),
-                    J => gui.scroll_bottom(),
-                    K => gui.scroll_top(),
+                    J => gui.scroll_page(Scroll::Bottom),
+                    K => gui.scroll_page(Scroll::Top),
                     _ => {}
                 }
             } else if self.ctrl && self.shift {
                 // Ctrl-Shift
                 match self.key {
-                    J => gui.scroll_bottom(),
-                    K => gui.scroll_top(),
+                    J => gui.scroll_page(Scroll::Bottom),
+                    K => gui.scroll_page(Scroll::Top),
                     _ => {}
                 }
             }
