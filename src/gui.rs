@@ -487,6 +487,7 @@ pub fn run(args: Matches) {
     let vbox = gtk::Box::new(Vertical, 0);
     gui.notebook.set_scrollable(true);
     gui.notebook.set_property_enable_popup(true);
+    gui.notebook.set_show_tabs(false);
     vbox.pack_start(&gui.notebook, true, true, 0);
     vbox.pack_start(&gui.command_box, false, false, 0);
 
@@ -525,8 +526,17 @@ pub fn run(args: Matches) {
 
     gui.notebook
         .connect_page_removed(clone!(@weak gui => move |_,_,_| {
-            if gui.notebook.get_children().is_empty() {
-                gtk::main_quit();
+            match gui.notebook.get_children().len() {
+                0 => gtk::main_quit(),
+                1 => gui.notebook.set_show_tabs(false),
+                _ => gui.notebook.set_show_tabs(true),
+            };
+        }));
+
+    gui.notebook
+        .connect_page_added(clone!(@weak gui => move |_,_,_| {
+            if gui.notebook.get_children().len() > 1 {
+                gui.notebook.set_show_tabs(true);
             }
         }));
 
