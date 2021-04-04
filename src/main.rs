@@ -1,11 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
 use getopts::Options;
-extern crate gdk;
-extern crate gio;
-extern crate glib;
-extern crate gtk;
-extern crate url;
-extern crate webkit2gtk;
 
 use std::{env, process};
 use std::path::PathBuf;

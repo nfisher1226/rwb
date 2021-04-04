@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
-use crate::url::Url;
+use url::Url;
 use crate::CONFIG;
 
 pub struct Command {

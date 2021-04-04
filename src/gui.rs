@@ -1,11 +1,11 @@
 #![warn(clippy::all, clippy::pedantic)]
-use crate::gdk::ModifierType;
-use crate::glib::clone;
-use crate::gtk::Orientation::Vertical;
-use crate::gtk::WindowType::Toplevel;
-use crate::gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
-use crate::url::Url;
-use crate::webkit2gtk::{CookieManagerExt, LoadEvent, WebContext, WebContextExt, WebViewExt};
+use gdk::ModifierType;
+use glib::clone;
+use gtk::Orientation::Vertical;
+use gtk::WindowType::Toplevel;
+use gtk::{prelude::*, ContainerExt, EntryExt, Inhibit, NotebookExt, WidgetExt};
+use url::Url;
+use webkit2gtk::{CookieManagerExt, LoadEvent, WebContext, WebContextExt, WebViewExt};
 use getopts::Matches;
 use webkit2gtk::CookiePersistentStorage::Text;
 
